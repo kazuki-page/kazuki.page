@@ -27,15 +27,41 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { Resvg } from '@resvg/resvg-js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const SOURCE = join(root, 'src/assets/icon-source.svg');
 /* favicon も同じ絵。ダークのタブバーでも同じ問題が起きるので同じものを使う */
-const OUTPUTS = [join(root, 'public/icon.svg'), join(root, 'public/favicon.svg')];
+const SVG_OUTPUTS = [join(root, 'public/icon.svg'), join(root, 'public/favicon.svg')];
+const ICO_OUTPUT = join(root, 'public/favicon.ico');
 
-/** 縁が元の線の外側にはみ出す量（viewBox 単位）。96px 表示で片側およそ 1px */
+/** SVG に使う縁の太さ（viewBox 単位）。96px 表示で片側およそ 1px */
 const HALO = 3.0;
+
+/**
+ * .ico に入れる解像度と、そこでの縁の太さ（px）。
+ *
+ * 16 と 32 がタブとブックマーク、48 が Windows の一覧、256 は
+ * 拡大表示される場面のため。SVG を読めるブラウザは favicon.svg を
+ * 優先するので、この .ico が出るのは SVG 非対応の環境だけ。
+ *
+ * 縁は viewBox 単位で指定するので、SVG と同じ値のままだと 16px では
+ * 3 / 283.7 * 16 ≈ 0.17px にしかならず、まったく見えない。かといって
+ * どの解像度も同じ太さ（例えば 1.3px）に揃えると、今度は小さいほうが
+ * 破綻する。16px の 1.3px は絵の 16% を縁が占める計算で、実際に
+ * 並べて見るとヘッドホンのアーチが白い塊に潰れ、オレンジの点に白い輪が
+ * 付いただけのものになった。
+ *
+ * 小さいほど控えめに、という手で決めた値。数式にしていないのは、
+ * これが計算ではなく見比べた結果だから。null は SVG と同じ太さ。
+ */
+const ICO_SIZES = [
+  { size: 16, haloPx: 0.6 },
+  { size: 32, haloPx: 0.9 },
+  { size: 48, haloPx: 1.1 },
+  { size: 256, haloPx: null },
+];
 
 /*
  * 原画の 1 つめのグループは中身が transform で縮小されている。
@@ -83,10 +109,16 @@ function toHalo(group, strokeWidth) {
     .replace(/^<g\b/, '<g stroke-linejoin="round"');
 }
 
+// --- 原画を読む -----------------------------------------------------------
+
 const source = readFileSync(SOURCE, 'utf8');
 
 const openTag = source.match(/<svg\b[^>]*>/);
 if (!openTag) throw new Error(`${SOURCE} に <svg> が見つからない`);
+
+const viewBox = openTag[0].match(/viewBox="[\d.\s-]*?\s([\d.]+)\s+[\d.]+"/);
+if (!viewBox) throw new Error(`${SOURCE} の viewBox が読めない`);
+const viewBoxWidth = Number(viewBox[1]);
 
 const body = source.slice(openTag.index + openTag[0].length, source.lastIndexOf('</svg>'));
 const groups = splitTopLevel(body);
@@ -100,17 +132,76 @@ if (groups.length !== 2) {
 
 const [fills, lines] = groups;
 
-/*
- * 縁は塗りと黒線の両方から作る。
- * 黒線ぶんを省くと軽くなりそうに見えるが、ヘッドホンのアーチは塗りを持たない
- * 線だけの図形なので、省くとそこに縁が付かず見た目が変わってしまう（実測 6.5% 差）。
+/**
+ * 指定した太さの縁を付けた SVG を組み立てる。
+ *
+ * 縁は塗りと黒線の両方から作る。黒線ぶんを省くと軽くなりそうに見えるが、
+ * ヘッドホンのアーチは塗りを持たない線だけの図形なので、省くとそこに縁が
+ * 付かず見た目が変わってしまう（実測 6.5% 差）。
  */
-const halo =
-  toHalo(fills, 18.898 + (HALO * 2) / GROUP1_SCALE) + toHalo(lines, 5 + HALO * 2);
-
-const result = `${openTag[0]}${halo}${body}</svg>`;
-
-for (const out of OUTPUTS) {
-  writeFileSync(out, result);
-  console.log(`${out} を書いた (${result.length} バイト)`);
+function buildSvg(halo) {
+  const haloLayer =
+    toHalo(fills, 18.898 + (halo * 2) / GROUP1_SCALE) + toHalo(lines, 5 + halo * 2);
+  return `${openTag[0]}${haloLayer}${body}</svg>`;
 }
+
+// --- SVG を書く -----------------------------------------------------------
+
+const svg = buildSvg(HALO);
+for (const out of SVG_OUTPUTS) {
+  writeFileSync(out, svg);
+  console.log(`${out.replace(root + '/', '')}  ${svg.length} バイト`);
+}
+
+// --- .ico を書く ----------------------------------------------------------
+
+/**
+ * PNG を並べて .ico にまとめる。
+ *
+ * ヘッダ 6 バイト + 解像度ごとの索引 16 バイト、そのあとに画像本体が続く。
+ * 中身は PNG のまま入れている（Windows Vista 以降と現行ブラウザが対応する）。
+ */
+function packIco(images) {
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0); // 予約領域
+  header.writeUInt16LE(1, 2); // 1 = アイコン
+  header.writeUInt16LE(images.length, 4);
+
+  const directory = Buffer.alloc(16 * images.length);
+  let offset = header.length + directory.length;
+
+  images.forEach(({ size, png }, i) => {
+    const o = i * 16;
+    // 256 は 1 バイトに収まらないので 0 と書く決まり
+    directory.writeUInt8(size === 256 ? 0 : size, o);
+    directory.writeUInt8(size === 256 ? 0 : size, o + 1);
+    directory.writeUInt8(0, o + 2); // パレット数（true color なので 0）
+    directory.writeUInt8(0, o + 3); // 予約領域
+    directory.writeUInt16LE(1, o + 4); // カラープレーン数
+    directory.writeUInt16LE(32, o + 6); // ビット深度
+    directory.writeUInt32LE(png.length, o + 8);
+    directory.writeUInt32LE(offset, o + 12);
+    offset += png.length;
+  });
+
+  return Buffer.concat([header, directory, ...images.map((i) => i.png)]);
+}
+
+const images = ICO_SIZES.map(({ size, haloPx }) => {
+  // px で決めた太さを viewBox 単位に戻す
+  const halo = haloPx === null ? HALO : (haloPx * viewBoxWidth) / size;
+  const png = new Resvg(buildSvg(halo), {
+    fitTo: { mode: 'width', value: size },
+    background: 'rgba(0,0,0,0)',
+  })
+    .render()
+    .asPng();
+
+  console.log(`  ${String(size).padStart(3)}px  縁 ${halo.toFixed(1)} 単位  ${png.length} バイト`);
+  return { size, png };
+});
+
+const ico = packIco(images);
+writeFileSync(ICO_OUTPUT, ico);
+const sizeList = ICO_SIZES.map(({ size }) => size).join(', ');
+console.log(`${ICO_OUTPUT.replace(root + '/', '')}  ${ico.length} バイト  (${sizeList})`);
