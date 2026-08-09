@@ -29,9 +29,35 @@ src/
   pages/policy.astro  現行 WordPress から文面ごと引き継いだもの
   layouts/            <head>・テーマ切り替え・フッター
   styles/global.css   blog.kazuki.page と共通の土台（色・書体・最上部の帯）
+  assets/
+    icon-source.svg   アイコンの原画（縁なし）。絵を直すならこれ
+scripts/
+  build-icon.mjs      原画に白い縁を付けて public/ へ書き出す
 ```
 
 **内容の変更は `src/data/profile.ts` だけで完結する。** 見た目を触る必要はない。
+
+## アイコンの白い縁
+
+`public/icon.svg` と `public/favicon.svg` は**生成物**。直接編集しない。
+
+原画は線画が黒なので、ダークテーマだとヘッドホンのアーチと紺のイヤーカップが
+地色に沈んでマークとして読めない。CSS でこのページに円を敷いても favicon や
+X に置いたときには効かないので、絵の側で解いている。
+
+やっていることは、絵全体の「太い白コピー」を最下層に一枚敷くだけ。上から原画が
+そのまま重なるので、シルエットからはみ出した分だけが白く残る。この敷き方だと
+**白背景では原画と 1 画素も変わらない**（実測 0.00%、最大差 0）。ライトテーマでも
+白地の OGP 画像でも何も足したことにならず、暗い背景のときだけ縁が現れる。
+
+灰色も検討したが、白地でも縁が見えるようになりこの性質が失われるのでやめた。
+縁は絵の一部ではなく補助でいてほしい。
+
+原画を描き直したら再実行する。
+
+```bash
+node scripts/build-icon.mjs
+```
 
 ## blog.kazuki.page との関係
 
@@ -61,8 +87,8 @@ RSS の取得に失敗してもビルドは通る（記事セクションが消�
 
 ## 移行前にやること
 
-- [ ] アイコン画像を `public/` に置き、`intro.avatar` にパスを書く
-- [ ] OGP 画像の差し替え（`public/ogp-default.png` は今ブログ用の流用）
+- [ ] `public/favicon.ico` と `apple-touch-icon.png` も白い縁ありに揃えるか決める
+      （SVG の 2 つは対応済み。この 2 つはラスタなのでスクリプトの対象外）
 - [ ] 現行 WordPress のサイトマップで公開 URL を棚卸しし、`public/_redirects` に追記
 - [ ] Cloudflare Pages にプロジェクトを作成（Direct Upload、ブログと同じ方式）
 - [ ] DNS を切り替え、`/about/` → `/` の 301 が効いていることを確認
