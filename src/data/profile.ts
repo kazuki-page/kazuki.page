@@ -19,7 +19,8 @@ export const intro = {
   /*
    * アイコン画像。
    */
-  avatar: null as string | null,
+  /* 先頭のスラッシュは必須。相対パスだと下層ページを足したときに壊れる */
+  avatar: '/icon.svg',
 };
 
 /*
