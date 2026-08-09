@@ -35,27 +35,62 @@ export const now: { text: string; note?: string }[] = [
 
 /*
  * つくっているもの。
+ *
+ * 媒体名を並べるのではなく、媒体ごとに実物を 2 件ずつ出す。
+ * 「フォローしたら何が流れてくるか」への答えとしては、分類の説明より
+ * 実際の作品名のほうが強い。3 件にすると 4 媒体で 12 件になり、
+ * 30 秒で読まれる 1 ページには多すぎる。2 件なら本当に選ぶことになるので、
+ * 「並べた」ではなく「選んだ」に見える。
+ *
+ * ブログだけは latest: true にして、ビルド時に RSS の最新 2 件が入る。
+ * 更新頻度が価値の媒体なので新しさを出す。他は頻度で戦っていないので、
+ * 本人が選んだものを置く。
+ *
+ * 日付が出るのはブログだけなので、読む人には「日付があるものは新着、
+ * ないものは選んだもの」と自然に読める。言葉での説明は足していない。
  */
-export const works = [
+type Work = {
+  medium: string;
+  url: string;
+  /** ビルド時に blog.kazuki.page の RSS から最新 2 件を入れる */
+  latest?: true;
+  /** 自分で選んだ代表作。2 件を想定 */
+  picks?: { title: string; url: string; note?: string }[];
+};
+
+export const works: Work[] = [
   {
-    title: 'ブログ',
+    medium: 'ブログ',
     url: 'https://blog.kazuki.page/',
-    description: '考えたことの記録と、定期的な振り返り。',
+    latest: true,
   },
   {
-    title: 'GitHub',
+    medium: 'GitHub',
     url: 'https://github.com/kazuki-page',
-    description: '自作アプリやウェブサイトのコード',
+    picks: [
+      {
+        title: 'kazuki.page',
+        url: 'https://github.com/kazuki-page/kazuki.page',
+        note: 'このサイト',
+      },
+      {
+        title: 'blog.kazuki.page',
+        url: 'https://github.com/kazuki-page/blog.kazuki.page',
+        note: 'ブログの実装',
+      },
+    ],
   },
   {
-    title: 'YouTube',
+    medium: 'YouTube',
     url: 'https://www.youtube.com/@kazuki-page',
-    description: 'ゲーム実況と楽曲カバー。',
+    // ★ 代表作を 2 件。動画のタイトルと URL、必要なら一言
+    picks: [],
   },
   {
-    title: 'pixiv',
+    medium: 'pixiv',
     url: 'https://www.pixiv.net/users/92910523',
-    description: 'FAを中心としたイラスト。',
+    // ★ 代表作を 2 件
+    picks: [],
   },
 ];
 
@@ -69,23 +104,17 @@ export const history: { year: string; text: string }[] = [
 ];
 
 /*
- * リンク一覧。
- * X は「次にしてほしいこと」の本命なのでこの配列には入れず、
- * ファーストビューと末尾で別扱いにしている（primaryLink）。
+ * ファーストビューと末尾に置く、このサイトの本命の導線。
+ *
+ * かつては「リンク」セクションで媒体を一覧していたが、「つくっているもの」が
+ * 媒体ごとの見出しを持つようになった時点で中身がそのまま重複したので畳んだ。
+ * 各媒体へは「つくっているもの」の見出しから行ける。
  */
 export const primaryLink = {
   label: 'X (@kazuki_page)',
   url: 'https://x.com/kazuki_page',
   description: '活動報告、つぶやきなど。だいたいはここで観測可能。',
 };
-
-export const links = [
-  { label: 'ブログ', url: 'https://blog.kazuki.page/' },
-  { label: 'GitHub', url: 'https://github.com/kazuki-page' },
-  { label: 'YouTube', url: 'https://www.youtube.com/@kazuki-page' },
-  { label: 'pixiv', url: 'https://www.pixiv.net/users/92910523' },
-  { label: 'OFUSE', url: 'https://ofuse.me/kazukipage' },
-];
 
 export const contact = {
   text: 'ご連絡は X のダイレクトメッセージへ。',

@@ -5,18 +5,18 @@
  * セクションの順番そのものに役割がある：
  *   ①hero  10 秒で判断する層。ここで X を出し、戻らずフォローできるようにする
  *   ②now   進行中のもの。「応援したくなる」はここに向く
- *   ③works 何が流れてくるかの予測材料
+ *   ③works 何が流れてくるかの予測材料。各媒体への導線もここが兼ねる
  *   ④history 盛らない事実。誠実さと、就活で見られたときの担保
- *   ⑤links ハブ
- *   ⑥contact + 最終更新日
+ *   ⑤contact + 最終更新日
  *
  * 順番を入れ替えるときは、上の意図ごと考え直すこと。
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { intro, now, works, history, primaryLink, links, contact, updatedAt } from '../data/profile';
+import { intro, now, works, history, primaryLink, contact, updatedAt } from '../data/profile';
 import { getLatestPosts } from '../lib/blog-posts';
 
-const posts = await getLatestPosts(3);
+/* 媒体ごとに 2 件ずつ。ブログもそれに揃える */
+const posts = await getLatestPosts(2);
 
 const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
   year: 'numeric',
@@ -70,44 +70,49 @@ const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
 
   <section>
     <h2>つくっているもの</h2>
-    <ul class="works">
-      {
-        works.map((work) => (
-          <li>
-            <a href={work.url} rel="noopener noreferrer">
-              {work.title}
-            </a>
-            <span class="note">{work.description}</span>
-          </li>
-        ))
-      }
-    </ul>
-
-    {/*
-      RSS の取得に失敗したときは 0 件になる。
-      そのときはセクションごと出さない（空の見出しだけ残るほうが不自然）。
-    */}
     {
-      posts.length > 0 && (
-        <div class="latest">
-          <h3>最近書いたもの</h3>
-          <ul class="posts">
-            {posts.map((post) => (
-              <li>
-                <time datetime={post.date.toISOString()}>{dateFormatter.format(post.date)}</time>
-                <a href={post.url} rel="noopener noreferrer">
-                  {post.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-          <p class="more">
-            <a href="https://blog.kazuki.page/" rel="noopener noreferrer">
-              ブログをすべて見る
-            </a>
-          </p>
-        </div>
-      )
+      works.map((work) => {
+        /*
+         * ブログは RSS から、それ以外は本人が選んだものを出す。
+         * RSS の取得に失敗したらブログの項目は 0 件になるので、
+         * そのときは媒体への導線だけ残す（空の枠は出さない）。
+         */
+        const entries = work.latest
+          ? posts.map((post) => ({
+              title: post.title,
+              url: post.url,
+              date: post.date,
+            }))
+          : (work.picks ?? []).map((pick) => ({ ...pick, date: null }));
+
+        return (
+          <div class="work">
+            <h3>
+              <a href={work.url} rel="noopener noreferrer">
+                {work.medium}
+              </a>
+            </h3>
+
+            {entries.length > 0 && (
+              <ul class="entries">
+                {entries.map((entry) => (
+                  <li>
+                    {entry.date && (
+                      <time datetime={entry.date.toISOString()}>
+                        {dateFormatter.format(entry.date)}
+                      </time>
+                    )}
+                    <a href={entry.url} rel="noopener noreferrer">
+                      {entry.title}
+                    </a>
+                    {'note' in entry && entry.note && <span class="note">{entry.note}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })
     }
   </section>
 
@@ -119,21 +124,6 @@ const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
           <li>
             <span class="year">{item.year}</span>
             <span>{item.text}</span>
-          </li>
-        ))
-      }
-    </ul>
-  </section>
-
-  <section>
-    <h2>リンク</h2>
-    <ul class="links">
-      {
-        links.map((link) => (
-          <li>
-            <a href={link.url} rel="noopener noreferrer">
-              {link.label}
-            </a>
           </li>
         ))
       }
@@ -279,33 +269,47 @@ const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
 
   /* --- ③works ------------------------------------------------------- */
 
-  .works li {
-    padding-block: 0.75rem;
-    border-bottom: 1px solid var(--border);
+  /*
+   * 媒体を見出しにして、その下に実物を 2 件ずつ。
+   * 媒体どうしは罫線ではなく余白で分ける。4 つ並ぶので、
+   * 線を引くと表のように見えて「作品を見せる場」に読めなくなる。
+   */
+  .work {
+    margin-block: 1.75rem;
   }
 
-  /*
-   * 先頭に border-top は付けない。すぐ上の h2 の下線と二重に見えるため。
-   * 区切りは h2 側に任せる。
-   */
-
-  .posts li {
-    display: flex;
-    gap: 0.85rem;
-    align-items: baseline;
-    margin-block: 0.6rem;
+  .work h3 {
+    margin: 0 0 0.5rem;
     font-size: 0.9rem;
   }
 
-  .posts time {
-    flex: none;
-    color: var(--muted);
-    font-size: 0.8rem;
+  /*
+   * 媒体名は青くしない。ここで青を使うと、見出しと中身の作品名が
+   * 同じ強さになって、どちらを見ればいいのか分からなくなる。
+   * 見出しは構造、青くなっている作品名が本体、という並びにする。
+   * （global.css でナビゲーションのリンクを黒のままにしているのと同じ考え方）
+   */
+  .work h3 a {
+    color: inherit;
   }
 
-  .more {
-    margin-block: 1rem 0;
-    font-size: 0.85rem;
+  .work h3 a:hover {
+    color: var(--accent);
+  }
+
+  .entries li {
+    margin-block: 0.5rem;
+    padding-inline-start: 0.9rem;
+    font-size: 0.9rem;
+    /* 見出しの媒体と、その中身であることが分かる程度の段差 */
+    border-inline-start: 1px solid var(--border);
+  }
+
+  /* 日付が入るのはブログだけ。これが「新着」と「選んだもの」の目印になる */
+  .entries time {
+    display: block;
+    color: var(--muted);
+    font-size: 0.75rem;
   }
 
   /* --- ④history ----------------------------------------------------- */
@@ -324,30 +328,7 @@ const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
     font-size: 0.85rem;
   }
 
-  /* --- ⑤links ------------------------------------------------------- */
-
-  .links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-  }
-
-  .links a {
-    display: inline-block;
-    padding: 0.35rem 0.9rem;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    color: inherit;
-    font-size: 0.85rem;
-  }
-
-  .links a:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    text-decoration: none;
-  }
-
-  /* --- ⑥contact ----------------------------------------------------- */
+  /* --- ⑤contact ----------------------------------------------------- */
 
   .updated {
     margin-block: 2rem 0;
