@@ -1,0 +1,89 @@
+---
+import '../styles/global.css';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import { intro } from '../data/profile';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const SITE_NAME = 'kazuki.page';
+
+/*
+ * 既定の description は一行紹介から組み立てる。
+ * ここに文面を直接書くと profile.ts を直したときに片方だけ古くなり、
+ * X で共有されたときの説明文が本文と食い違う。
+ */
+const DEFAULT_DESCRIPTION = `${intro.tagline}${intro.taglineSub}`;
+
+const { title, description = DEFAULT_DESCRIPTION, ogImage = '/ogp-default.png' } = Astro.props;
+
+const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImageUrl = new URL(ogImage, Astro.site);
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {/*
+      テーマは描画前に確定させる。CSS 読み込み後に JS で切り替えると、
+      ダークを選んでいる人の再訪時に一瞬白い画面が出る。
+      ブログと同じ localStorage のキーを使っているが、ドメインが違うため
+      設定は共有されない（サブドメイン間で共有するには Cookie が要る）。
+    */}
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          document.documentElement.dataset.theme =
+            stored ||
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        } catch (e) {
+          /* localStorage が使えない環境では OS の設定にまかせる */
+        }
+      })();
+    </script>
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title ?? SITE_NAME} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:site_name" content={SITE_NAME} />
+    {/*
+      X で共有されたときの見え方はこのサイトの目的に直結するので大きい画像にする。
+      ※ public/ogp-default.png はまだブログ用の流用。差し替えること
+    */}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@kazuki_page" />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  </head>
+
+  <body>
+    <main>
+      <slot />
+    </main>
+
+    <footer>
+      <p>&copy; kazuki.page</p>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/policy/">Policy</a>
+        <ThemeToggle />
+      </nav>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+# WordPress からの移行にともなうリダイレクト。
+#
+# 書式: <元パス> <転送先> <ステータス>
+# 上から順に評価され、最初に一致したものが使われる。
+
+# プロフィールは /about/ からトップへ移した。
+# blog.kazuki.page/about/ からリンクしているほか、X のプロフィール欄などに
+# 貼られている可能性があるため 301 は必須。
+/about/    /    301
+/about     /    301
+
+# ★ 移行前に、現行 WordPress のサイトマップ（https://kazuki.page/sitemap_index.xml など）
+#    で公開 URL を棚卸しし、/about/ /policy/ 以外に生きている URL があればここに足すこと。
+#    Search Console のカバレッジも見ておくと取りこぼしが減る。

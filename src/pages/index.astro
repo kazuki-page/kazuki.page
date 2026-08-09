@@ -1,0 +1,357 @@
+---
+/*
+ * プロフィールの 1 ページ。
+ *
+ * セクションの順番そのものに役割がある：
+ *   ①hero  10 秒で判断する層。ここで X を出し、戻らずフォローできるようにする
+ *   ②now   進行中のもの。「応援したくなる」はここに向く
+ *   ③works 何が流れてくるかの予測材料
+ *   ④history 盛らない事実。誠実さと、就活で見られたときの担保
+ *   ⑤links ハブ
+ *   ⑥contact + 最終更新日
+ *
+ * 順番を入れ替えるときは、上の意図ごと考え直すこと。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { intro, now, works, history, primaryLink, links, contact, updatedAt } from '../data/profile';
+import { getLatestPosts } from '../lib/blog-posts';
+
+const posts = await getLatestPosts(3);
+
+const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+---
+
+<BaseLayout>
+  <section class="hero">
+    {
+      intro.avatar ? (
+        <img class="avatar" src={intro.avatar} alt="" width="96" height="96" />
+      ) : (
+        /* アイコン画像が用意できるまでの仮置き。サイトの差し色をそのまま使う */
+        <div class="avatar avatar--placeholder" aria-hidden="true" />
+      )
+    }
+
+    <h1>{intro.name}</h1>
+    <p class="reading">{intro.reading}</p>
+
+    <p class="tagline">
+      {intro.tagline}<br />
+      {intro.taglineSub}
+    </p>
+
+    {/*
+      ページ内で唯一の塗りボタン。他をすべて静かにしてあるので、
+      「次にしてほしいこと」がここだと迷わず分かる。
+    */}
+    <a class="cta" href={primaryLink.url} rel="me noopener noreferrer">
+      {primaryLink.label} をフォロー
+    </a>
+    <p class="cta-note">{primaryLink.description}</p>
+  </section>
+
+  <section>
+    <h2>いま</h2>
+    <ul class="now">
+      {
+        now.map((item) => (
+          <li>
+            {item.text}
+            {item.note && <span class="note">{item.note}</span>}
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section>
+    <h2>つくっているもの</h2>
+    <ul class="works">
+      {
+        works.map((work) => (
+          <li>
+            <a href={work.url} rel="noopener noreferrer">
+              {work.title}
+            </a>
+            <span class="note">{work.description}</span>
+          </li>
+        ))
+      }
+    </ul>
+
+    {/*
+      RSS の取得に失敗したときは 0 件になる。
+      そのときはセクションごと出さない（空の見出しだけ残るほうが不自然）。
+    */}
+    {
+      posts.length > 0 && (
+        <div class="latest">
+          <h3>最近書いたもの</h3>
+          <ul class="posts">
+            {posts.map((post) => (
+              <li>
+                <time datetime={post.date.toISOString()}>{dateFormatter.format(post.date)}</time>
+                <a href={post.url} rel="noopener noreferrer">
+                  {post.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p class="more">
+            <a href="https://blog.kazuki.page/" rel="noopener noreferrer">
+              ブログをすべて見る
+            </a>
+          </p>
+        </div>
+      )
+    }
+  </section>
+
+  <section>
+    <h2>これまで</h2>
+    <ul class="history">
+      {
+        history.map((item) => (
+          <li>
+            <span class="year">{item.year}</span>
+            <span>{item.text}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section>
+    <h2>リンク</h2>
+    <ul class="links">
+      {
+        links.map((link) => (
+          <li>
+            <a href={link.url} rel="noopener noreferrer">
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section>
+    <h2>連絡</h2>
+    <p>
+      {contact.text}<br />
+      <a href={contact.url} rel="noopener noreferrer">{contact.url}</a>
+    </p>
+    {/* 「生きているサイト」であることを示す一行。誠実さの伝達効率が高い */}
+    <p class="updated">最終更新：{updatedAt}</p>
+  </section>
+</BaseLayout>
+
+<style>
+  section {
+    margin-block: 3.5rem;
+  }
+
+  h2 {
+    font-size: 1.05rem;
+    margin-block: 0 1rem;
+    padding-bottom: 0.5rem;
+    /* ブログの h2 と同じ「少し内側で絞る下線」 */
+    position: relative;
+  }
+
+  h2::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0.65rem;
+    bottom: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-block: 2rem 0.75rem;
+  }
+
+  /* --- ①hero ------------------------------------------------------- */
+
+  .hero {
+    text-align: center;
+    margin-block: 2rem 4rem;
+  }
+
+  .avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .avatar--placeholder {
+    margin-inline: auto;
+    background: conic-gradient(
+      from 210deg,
+      var(--stripe-lightblue),
+      var(--stripe-yellow),
+      var(--stripe-navy),
+      var(--stripe-lightblue)
+    );
+  }
+
+  .hero h1 {
+    font-size: 1.5rem;
+    margin-block: 1.25rem 0;
+  }
+
+  .reading {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .tagline {
+    margin-block: 1.5rem;
+    line-height: 2;
+    /* 「配信して。」だけが 1 行に取り残されるのを防ぐ */
+    text-wrap: balance;
+  }
+
+  .cta {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.7rem 1.6rem;
+    border-radius: 999px;
+    background: var(--text);
+    color: var(--bg);
+    font-size: 0.95rem;
+  }
+
+  .cta:hover {
+    text-decoration: none;
+    opacity: 0.85;
+  }
+
+  .cta-note {
+    margin-block: 0.9rem 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* --- リスト共通 ---------------------------------------------------- */
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .note {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* --- ②now --------------------------------------------------------- */
+
+  .now li {
+    position: relative;
+    padding-inline-start: 1.5rem;
+    margin-block: 0.9rem;
+  }
+
+  /* 「進行中」を示す小さな点。中黒やハイフンより動きが出る */
+  .now li::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0.35rem;
+    top: 0.75em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--stripe-yellow);
+  }
+
+  /* --- ③works ------------------------------------------------------- */
+
+  .works li {
+    padding-block: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /*
+   * 先頭に border-top は付けない。すぐ上の h2 の下線と二重に見えるため。
+   * 区切りは h2 側に任せる。
+   */
+
+  .posts li {
+    display: flex;
+    gap: 0.85rem;
+    align-items: baseline;
+    margin-block: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .posts time {
+    flex: none;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  .more {
+    margin-block: 1rem 0;
+    font-size: 0.85rem;
+  }
+
+  /* --- ④history ----------------------------------------------------- */
+
+  .history li {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    margin-block: 0.6rem;
+  }
+
+  .year {
+    flex: none;
+    width: 3.5rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* --- ⑤links ------------------------------------------------------- */
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .links a {
+    display: inline-block;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: inherit;
+    font-size: 0.85rem;
+  }
+
+  .links a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* --- ⑥contact ----------------------------------------------------- */
+
+  .updated {
+    margin-block: 2rem 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+</style>

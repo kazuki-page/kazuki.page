@@ -1,0 +1,147 @@
+/*
+ * blog.kazuki.page と同じ土台。
+ * 2 サイトが 1 つのブランドに見えるよう、色・書体・最上部の帯は揃える。
+ * 違うのは密度だけ ―― ブログは読ませる場、こちらは 10 秒で判断される場。
+ */
+
+:root {
+  --bg: #ffffff;
+  --text: #111111;
+  --muted: #666666;
+  --accent: #0066cc;
+  --border: #e5e5e5;
+  --surface: #f5f5f5;
+  --measure: 40rem;
+
+  /* ページ最上部の帯用。ライト/ダークで変えない固定の差し色 */
+  --stripe-yellow: #ffb94d;
+  --stripe-navy: #003156;
+  --stripe-lightblue: #e8f1ff;
+}
+
+:root[data-theme='dark'] {
+  --bg: #141414;
+  --text: #e6e6e6;
+  --muted: #9a9a9a;
+  /* 黒背景では #0066cc は暗すぎて読めないため明るい青にする */
+  --accent: #7ab3f5;
+  --border: #2e2e2e;
+  --surface: #1e1e1e;
+}
+
+/* JavaScript が無効で data-theme が付かない場合のフォールバック */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #141414;
+    --text: #e6e6e6;
+    --muted: #9a9a9a;
+    --accent: #7ab3f5;
+    --border: #2e2e2e;
+    --surface: #1e1e1e;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    'BIZ UDゴシック', 'Noto Sans Mono CJK JP', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px;
+  line-height: 1.8;
+  -webkit-text-size-adjust: 100%;
+  /* 最上部の帯 (body::before) をビューポート端に付けず、少し余白を空けて置く */
+  padding-top: 8px;
+  overflow-wrap: break-word;
+}
+
+/*
+ * ページ最上部に引く 3 本の細い線。ブログと同一。
+ * 上から水色・黄色・紺色。中央が最も濃く、左右の端にいくほど背景に消える。
+ */
+body::before {
+  content: '';
+  display: block;
+  height: 9px;
+  background-repeat: no-repeat;
+  background-size: 100% 33.334%;
+  background-position:
+    top,
+    center,
+    bottom;
+  background-image:
+    linear-gradient(to right, transparent, var(--stripe-lightblue), transparent),
+    linear-gradient(to right, transparent, var(--stripe-yellow), transparent),
+    linear-gradient(to right, transparent, var(--stripe-navy), transparent);
+}
+
+main,
+body > footer {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-inline: 1.5rem;
+}
+
+main {
+  padding-block: 2rem 4rem;
+}
+
+body > footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-block: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+body > footer p {
+  margin: 0;
+}
+
+body > footer nav {
+  display: flex;
+  gap: 1rem;
+}
+
+/*
+ * リンクの色は「本文か、ナビゲーションか」で分ける（ブログと同じ考え方）。
+ * 本文中は常時青、ナビゲーションはホバーまで色を付けない。
+ */
+body > footer a {
+  color: inherit;
+}
+
+body > footer a:hover {
+  color: var(--accent);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
