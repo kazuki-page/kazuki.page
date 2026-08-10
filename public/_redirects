@@ -2,6 +2,10 @@
 #
 # 書式: <元パス> <転送先> <ステータス>
 # 上から順に評価され、最初に一致したものが使われる。
+#
+# 現行サイトの URL は REST API (/wp-json/wp/v2/pages, /posts) で棚卸し済み。
+# 固定ページ 3 件（Top / about / policy）、投稿 0 件。
+# それ以外に 200 を返していたのは feed 系と category アーカイブだけだった。
 
 # プロフィールは /about/ からトップへ移した。
 # blog.kazuki.page/about/ からリンクしているほか、X のプロフィール欄などに
@@ -9,6 +13,18 @@
 /about/    /    301
 /about     /    301
 
-# ★ 移行前に、現行 WordPress のサイトマップ（https://kazuki.page/sitemap_index.xml など）
-#    で公開 URL を棚卸しし、/about/ /policy/ 以外に生きている URL があればここに足すこと。
-#    Search Console のカバレッジも見ておくと取りこぼしが減る。
+# WordPress のフィード。記事が 0 件なので中身は空だったが 200 を返していた。
+# 購読していた人がいたとすれば読みたかったのはブログのほうなので、そちらへ送る。
+/feed/             https://blog.kazuki.page/rss.xml    301
+/feed              https://blog.kazuki.page/rss.xml    301
+/comments/feed/    https://blog.kazuki.page/rss.xml    301
+
+# 旧 OGP 画像。すでに X に投稿されたカードがこの URL を指しているため、
+# 画像が欠けないよう新しいものへ向けておく。
+/wp-content/uploads/2025/12/20251229-typelogo-ogp.png    /ogp-default.png    301
+
+# 以下は意図的にリダイレクトしていない（404 のままでよい）:
+#   /category/uncategorized/  200 を返していたが投稿 0 件で中身が無い
+#   /wp-json/*                WordPress の REST API
+#   /wp-content/*             上の OGP 画像以外は favicon で、新しいものが使われる
+#   /contact/                 移行前から 404

@@ -60,7 +60,7 @@ type Work = {
 
 export const works: Work[] = [
   {
-    medium: 'ブログ',
+    medium: 'blog.kazuki.page（ブログ）',
     url: 'https://blog.kazuki.page/',
     latest: true,
   },
@@ -84,13 +84,35 @@ export const works: Work[] = [
     medium: 'YouTube',
     url: 'https://www.youtube.com/@kazuki-page',
     // ★ 代表作を 2 件。動画のタイトルと URL、必要なら一言
-    picks: [],
+    picks: [
+      {
+        title: 'Alice / 古川P covered by かずき',
+        url: 'https://www.youtube.com/watch?v=gLDRmTnubFE',
+        note: '歌ってみた',
+      },
+      {
+        title: '【新鬼武者 超鬼難】#1 縛り実況プレイ',
+        url: 'https://www.youtube.com/watch?v=yzUpgPZL1Bo',
+        note: 'ゲーム実況',
+      },
+    ],
   },
   {
     medium: 'pixiv',
     url: 'https://www.pixiv.net/users/92910523',
     // ★ 代表作を 2 件
-    picks: [],
+    picks: [
+      {
+        title: 'kazuki.page 立ち絵',
+        url: 'https://www.pixiv.net/artworks/147124951',
+        note: '自キャラの全身イラスト'
+      },
+      {
+        title: 'kazuki.page SDイラスト',
+        url: 'https://www.pixiv.net/artworks/147124993',
+        note: '自キャラのデフォルメイラスト'
+      },
+    ],
   },
 ];
 

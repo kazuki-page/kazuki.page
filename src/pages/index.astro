@@ -130,7 +130,12 @@ const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
     </ul>
   </section>
 
-  <section>
+  {/*
+    id を付けているのは、blog.kazuki.page の _redirects にある /contact/ を
+    ここへ向けられるようにするため。旧サイトに問い合わせページは無く、
+    暫定でトップに送っていた
+  */}
+  <section id="contact">
     <h2>連絡</h2>
     <p>
       {contact.text}<br />

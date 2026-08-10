@@ -100,12 +100,38 @@ RSS の取得に失敗してもビルドは通る（記事セクションが消�
 
 ## 移行前にやること
 
+- [ ] `src/data/profile.ts` の YouTube と pixiv の `picks` を埋める
 - [ ] OGP 画像を X で共有したときの見え方を実際に確認する
-- [ ] 現行 WordPress のサイトマップで公開 URL を棚卸しし、`public/_redirects` に追記
+- [x] 現行 WordPress の公開 URL を棚卸しし、`public/_redirects` に反映
 - [ ] Cloudflare Pages にプロジェクトを作成（Direct Upload、ブログと同じ方式）
 - [ ] DNS を切り替え、`/about/` → `/` の 301 が効いていることを確認
-- [ ] blog.kazuki.page 側の `/about/` にある「詳しいプロフィールは」のリンク先を確認
-- [ ] blog.kazuki.page の `_redirects` にある `/contact/` の暫定リダイレクトを見直す
+- [ ] blog.kazuki.page 側の `/about/` にある「詳しいプロフィールは」のリンク先を
+      `https://kazuki.page/` へ変更（301 は効くが直接向けたほうが素直）
+- [ ] blog.kazuki.page の `_redirects` にある `/contact/` を
+      `https://kazuki.page/#contact` へ変更（トップの連絡セクションに id を付けた）
+
+### 棚卸しの結果
+
+`/wp-sitemap.xml` は robots.txt に書かれているが 404 だったため、REST API で調べた。
+
+```
+/wp-json/wp/v2/pages → 3 件（Top / about / policy）
+/wp-json/wp/v2/posts → 0 件
+```
+
+200 を返していた URL と、移行後の扱いは次のとおり。
+
+| URL | 移行後 |
+| --- | --- |
+| `/` | 新トップ |
+| `/about/` | `/` へ 301 |
+| `/policy/` | そのまま存在する |
+| `/feed/`、`/comments/feed/` | ブログの RSS へ 301（中身は空だったが 200 を返していた） |
+| `/category/uncategorized/` | 404 のまま（投稿 0 件で中身が無い） |
+| `/wp-json/`、`/wp-content/*` | 消える。旧 OGP 画像だけ 301 する |
+
+旧 OGP 画像を残すのは、すでに X に投稿されたカードがその URL を指しているため。
+ブログの記事本文から `kazuki.page` を参照している箇所は 0 件だった。
 
 ## 技術構成
 
