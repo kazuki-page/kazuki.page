@@ -98,17 +98,53 @@ node scripts/build-icon.mjs
 RSS の取得に失敗してもビルドは通る（記事セクションが消えるだけ）。
 ブログ側が一時的に落ちているだけでデプロイできなくなるのは割に合わないため。
 
-## 移行前にやること
+## デプロイ
 
-- [ ] `src/data/profile.ts` の YouTube と pixiv の `picks` を埋める
-- [ ] OGP 画像を X で共有したときの見え方を実際に確認する
-- [x] 現行 WordPress の公開 URL を棚卸しし、`public/_redirects` に反映
-- [ ] Cloudflare Pages にプロジェクトを作成（Direct Upload、ブログと同じ方式）
-- [ ] DNS を切り替え、`/about/` → `/` の 301 が効いていることを確認
-- [ ] blog.kazuki.page 側の `/about/` にある「詳しいプロフィールは」のリンク先を
-      `https://kazuki.page/` へ変更（301 は効くが直接向けたほうが素直）
-- [ ] blog.kazuki.page の `_redirects` にある `/contact/` を
-      `https://kazuki.page/#contact` へ変更（トップの連絡セクションに id を付けた）
+`.github/workflows/deploy.yml` が Cloudflare Pages へ Direct Upload する。
+Cloudflare 側は Git 連携していないので、デプロイの起点はこのワークフローだけ。
+
+| 起点 | いつ |
+| --- | --- |
+| `main` への push | このリポジトリを直したとき |
+| 毎日 09:00 JST | ブログの最新記事を取り込み直すため |
+| 手動実行 | Actions タブから |
+
+**定期実行が要るのは、トップに出しているブログの最新記事をビルド時に RSS から
+取っているため。** push だけを起点にすると、ブログを書いてもこちらは古いままになる。
+
+必要な Secrets（`blog-content` リポジトリに設定してあるものと同じ値）:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+手元から直接上げることもできる。
+
+```bash
+npm run build && npx wrangler pages deploy dist --project-name=kazuki-page --branch=main
+```
+
+`<プロジェクト名>.pages.dev` は Cloudflare 側で無効にできないため、
+`functions/_middleware.js` で本番ドメインへ 301 している。
+`public/_redirects` はドメイン単位のリダイレクトに対応していないのでここで処理する。
+プレビュー用の `<ハッシュ>.kazuki-page.pages.dev` は対象外（本番へ飛ばすと
+デプロイ前の確認ができなくなる）。
+
+## 残っていること
+
+- [ ] Google Search Console に `https://kazuki.page/sitemap-index.xml` を送信
+- [ ] X でトップページを共有し、OGP の見え方を確認
+- [ ] `public/apple-touch-icon.png` は白背景で焼いたもの。SVG に白い縁を付けた
+      いまも見た目は揃っているが、作り直すなら原画から起こす
+- [ ] 旧ホスティングの解約。**ドメインのメール（MX が `pop.lsv.jp`）が
+      同じ契約に乗っているため、移行先を決めてから**
+
+## 移行の記録（2026-08）
+
+WordPress から移した。DNS ゾーンは元から Cloudflare にあったので、
+ネームサーバーの変更は不要だった。切り替えは Pages のカスタムドメイン追加で、
+既存の `A 113.36.242.230` / `AAAA 64:ff9b::7124:f2e6` を置き換えている。
+
+**MX と SPF の TXT には触っていない。** ドメイン宛のメールは旧ホストのままで生きている。
 
 ### 棚卸しの結果
 
@@ -132,6 +168,11 @@ RSS の取得に失敗してもビルドは通る（記事セクションが消�
 
 旧 OGP 画像を残すのは、すでに X に投稿されたカードがその URL を指しているため。
 ブログの記事本文から `kazuki.page` を参照している箇所は 0 件だった。
+
+切り替え前に `kazuki-page.pages.dev` へ上げて確認したことで、存在しない URL に
+トップページの中身が 200 で返る不具合が見つかった（`dist` に `404.html` が
+無いと Cloudflare Pages がそう振る舞う）。WordPress 時代の URL 全部で
+起きるところだったので、段階を踏んだ意味があった。
 
 ## 技術構成
 
