@@ -106,6 +106,15 @@ const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
                       {entry.title}
                     </a>
                     {'note' in entry && entry.note && <span class="note">{entry.note}</span>}
+                    {/*
+                      コードを指す項目で、実物が別の場所にあるときの導線。
+                      note は素のテキストなのでリンクを書けず、欄を分けている。
+                    */}
+                    {'demo' in entry && entry.demo && (
+                      <a class="demo" href={entry.demo.url} rel="noopener noreferrer">
+                        {entry.demo.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -315,6 +324,21 @@ const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
     display: block;
     color: var(--muted);
     font-size: 0.75rem;
+  }
+
+  /*
+   * 稼働しているものへの導線。作品名より一段弱くする。
+   * ここが主役になると、何を見てほしいのかがぼやける。
+   */
+  .demo {
+    display: inline-block;
+    margin-top: 0.15rem;
+    font-size: 0.75rem;
+  }
+
+  .demo::after {
+    /* 別の場所へ出ることを示す。外部リンクであることの合図 */
+    content: ' ↗';
   }
 
   /* --- ④history ----------------------------------------------------- */

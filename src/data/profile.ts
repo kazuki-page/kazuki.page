@@ -2,7 +2,7 @@
  * サイトに載せる内容はすべてこのファイルに集める。
  * 見た目を変えずに中身だけ直したいときは、ここだけ触れば済む。
  *
- * ★ の付いたコメントは「事実を確認してほしい箇所」。ドラフト時点の仮置き。
+ * 直したら末尾の updatedAt も直すこと。
  */
 
 /** ファーストビュー。X から来た人が最初の数秒で見るところ */
@@ -55,7 +55,19 @@ type Work = {
   /** ビルド時に blog.kazuki.page の RSS から最新 2 件を入れる */
   latest?: true;
   /** 自分で選んだ代表作。2 件を想定 */
-  picks?: { title: string; url: string; note?: string }[];
+  picks?: {
+    title: string;
+    url: string;
+    note?: string;
+    /*
+     * 稼働しているものへのリンク。GitHub のようにコードを指す項目で、
+     * 実物が別の場所にあるときに使う。
+     *
+     * note は素のテキストとして出しているのでリンクを書けない。
+     * 文章にマークアップを混ぜると後で扱いにくくなるため、欄を分けている。
+     */
+    demo?: { label: string; url: string };
+  }[];
 };
 
 export const works: Work[] = [
@@ -69,9 +81,10 @@ export const works: Work[] = [
     url: 'https://github.com/kazuki-page',
     picks: [
       {
-        title: '大家の帳面',
+        title: '家主の帳面',
         url: 'https://github.com/kazuki-page/chomen',
-        note: '賃貸データ管理アプリケーション。デモ： <a href="https://chomen-demo.kazuki.page" target="_blank">chomen-demo.kazuki.page</a>',
+        note: '賃貸データ管理アプリケーション',
+        demo: { label: 'デモを見る', url: 'https://chomen-demo.kazuki.page/' },
       },
       {
         title: 'blog.kazuki.page',
@@ -83,7 +96,6 @@ export const works: Work[] = [
   {
     medium: 'YouTube',
     url: 'https://www.youtube.com/@kazuki-page',
-    // ★ 代表作を 2 件。動画のタイトルと URL、必要なら一言
     picks: [
       {
         title: 'Alice / 古川P covered by かずき',
@@ -100,7 +112,6 @@ export const works: Work[] = [
   {
     medium: 'pixiv',
     url: 'https://www.pixiv.net/users/92910523',
-    // ★ 代表作を 2 件
     picks: [
       {
         title: 'kazuki.page 立ち絵',
@@ -148,4 +159,4 @@ export const contact = {
  * 「生きているサイト」であることを示す記号として置いている。
  * 内容を直したらここも直すこと。
  */
-export const updatedAt = '2026-08-09';
+export const updatedAt = '2026-08-13';
