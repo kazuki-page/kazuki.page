@@ -71,7 +71,7 @@ export const works: Work[] = [
       {
         title: '大家の帳面',
         url: 'https://github.com/kazuki-page/chomen',
-        note: '賃貸データ管理アプリケーション。デモ： https://chomen-demo.kazuki.page',
+        note: '賃貸データ管理アプリケーション。デモ： <a href="https://chomen-demo.kazuki.page" target="_blank">chomen-demo.kazuki.page</a>',
       },
       {
         title: 'blog.kazuki.page',
