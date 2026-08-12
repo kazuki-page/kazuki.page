@@ -81,6 +81,17 @@ export const works: Work[] = [
     ],
   },
   {
+    medium: 'アプリケーション(デモを含む)',
+    url: '',
+    picks: [
+      {
+        title: '大家の帳面(デモ)',
+        url: 'https://chomen-demo.kazuki.page',
+        note: '賃貸データ管理アプリケーション(デモ)',
+      },
+    ],
+  },
+  {
     medium: 'YouTube',
     url: 'https://www.youtube.com/@kazuki-page',
     // ★ 代表作を 2 件。動画のタイトルと URL、必要なら一言
