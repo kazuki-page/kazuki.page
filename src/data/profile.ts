@@ -69,42 +69,14 @@ export const works: Work[] = [
     url: 'https://github.com/kazuki-page',
     picks: [
       {
-        title: 'kazuki.page',
-        url: 'https://github.com/kazuki-page/kazuki.page',
-        note: 'このサイト',
+        title: '大家の帳面',
+        url: 'https://github.com/kazuki-page/chomen',
+        note: '賃貸データ管理アプリケーション。デモ： https://chomen-demo.kazuki.page',
       },
       {
         title: 'blog.kazuki.page',
         url: 'https://github.com/kazuki-page/blog.kazuki.page',
         note: 'ブログの実装',
-      },
-    ],
-  },
-  {
-    medium: 'アプリケーション(デモを含む)',
-    url: '',
-    picks: [
-      {
-        title: '大家の帳面(デモ)',
-        url: 'https://chomen-demo.kazuki.page',
-        note: '賃貸データ管理アプリケーション(デモ)',
-      },
-    ],
-  },
-  {
-    medium: 'YouTube',
-    url: 'https://www.youtube.com/@kazuki-page',
-    // ★ 代表作を 2 件。動画のタイトルと URL、必要なら一言
-    picks: [
-      {
-        title: 'Alice / 古川P covered by かずき',
-        url: 'https://www.youtube.com/watch?v=gLDRmTnubFE',
-        note: '歌ってみた',
-      },
-      {
-        title: '【新鬼武者 超鬼難】#1 縛り実況プレイ',
-        url: 'https://www.youtube.com/watch?v=yzUpgPZL1Bo',
-        note: 'ゲーム実況',
       },
     ],
   },
