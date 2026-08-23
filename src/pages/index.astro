@@ -5,18 +5,19 @@
  * セクションの順番そのものに役割がある：
  *   ①hero  10 秒で判断する層。ここで X を出し、戻らずフォローできるようにする
  *   ②now   進行中のもの。「応援したくなる」はここに向く
- *   ③works 何が流れてくるかの予測材料。各媒体への導線もここが兼ねる
- *   ④history 盛らない事実。誠実さと、就活で見られたときの担保
- *   ⑤contact + 最終更新日
+ *   ③apps  つくったもの。実物が 3 つ並ぶ、このサイトで一番強いところ
+ *   ④blog  何が流れてくるかの予測材料。更新が生きていることも示す
+ *   ⑤other YouTube と pixiv。存在が伝わればよく、中身は現地で見てもらう
+ *   ⑥history 盛らない事実。誠実さと、就活で見られたときの担保
+ *   ⑦contact + 最終更新日
  *
  * 順番を入れ替えるときは、上の意図ごと考え直すこと。
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { intro, now, works, history, primaryLink, contact, updatedAt } from '../data/profile';
+import { intro, now, apps, blog, otherLinks, history, primaryLink, contact, updatedAt } from '../data/profile';
 import { getLatestPosts } from '../lib/blog-posts';
 
-/* 媒体ごとに 2 件ずつ。ブログもそれに揃える */
-const posts = await getLatestPosts(2);
+const posts = await getLatestPosts(blog.limit, blog.maxRoutine);
 
 const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
   year: 'numeric',
@@ -69,60 +70,64 @@ const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
   </section>
 
   <section>
-    <h2>つくっているもの</h2>
+    <h2>つくったもの</h2>
     {
-      works.map((work) => {
-        /*
-         * ブログは RSS から、それ以外は本人が選んだものを出す。
-         * RSS の取得に失敗したらブログの項目は 0 件になるので、
-         * そのときは媒体への導線だけ残す（空の枠は出さない）。
-         */
-        const entries = work.latest
-          ? posts.map((post) => ({
-              title: post.title,
-              url: post.url,
-              date: post.date,
-            }))
-          : (work.picks ?? []).map((pick) => ({ ...pick, date: null }));
+      apps.map((app) => (
+        <article class="app">
+          {/*
+            カード全体がデモへのリンク。作品名だけを小さくリンクにするより、
+            「押せば動くものが見られる」が迷いなく伝わる。
+          */}
+          <a class="shot" href={app.demo} rel="noopener noreferrer">
+            <img src={app.image} alt={app.alt} width="1200" height="630" loading="lazy" />
+          </a>
 
-        return (
-          <div class="work">
-            <h3>
-              <a href={work.url} rel="noopener noreferrer">
-                {work.medium}
-              </a>
-            </h3>
-
-            {entries.length > 0 && (
-              <ul class="entries">
-                {entries.map((entry) => (
-                  <li>
-                    {entry.date && (
-                      <time datetime={entry.date.toISOString()}>
-                        {dateFormatter.format(entry.date)}
-                      </time>
-                    )}
-                    <a href={entry.url} rel="noopener noreferrer">
-                      {entry.title}
-                    </a>
-                    {'note' in entry && entry.note && <span class="note">{entry.note}</span>}
-                    {/*
-                      コードを指す項目で、実物が別の場所にあるときの導線。
-                      note は素のテキストなのでリンクを書けず、欄を分けている。
-                    */}
-                    {'demo' in entry && entry.demo && (
-                      <a class="demo" href={entry.demo.url} rel="noopener noreferrer">
-                        {entry.demo.label}
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
+          <div class="app-foot">
+            <h3>{app.name}</h3>
+            <p class="app-links">
+              <a href={app.demo} rel="noopener noreferrer">デモを見る</a>
+              {/* public にしていないものは repo を持たせていない。404 を出さない */}
+              {app.repo && <a href={app.repo} rel="noopener noreferrer">コード</a>}
+            </p>
           </div>
-        );
-      })
+        </article>
+      ))
     }
+  </section>
+
+  {/*
+    RSS が引けなかったときはセクションごと出さない。
+    空の枠が残るより、無いほうが「止まっている」に見えない。
+  */}
+  {posts.length > 0 && (
+    <section>
+      <h2>ブログ</h2>
+      <ul class="entries">
+        {posts.map((post) => (
+          <li>
+            <time datetime={post.date.toISOString()}>{dateFormatter.format(post.date)}</time>
+            <a href={post.url} rel="noopener noreferrer">{post.title}</a>
+          </li>
+        ))}
+      </ul>
+      <p class="more">
+        <a href={blog.url} rel="noopener noreferrer">blog.kazuki.page</a>
+      </p>
+    </section>
+  )}
+
+  <section>
+    <h2>そのほか</h2>
+    <ul class="other">
+      {
+        otherLinks.map((link) => (
+          <li>
+            <a href={link.url} rel="noopener noreferrer">{link.label}</a>
+            <span class="note">{link.note}</span>
+          </li>
+        ))
+      }
+    </ul>
   </section>
 
   <section>
@@ -281,64 +286,107 @@ const dateFormatter = new Intl.DateTimeFormat('ja-JP', {
     background: var(--stripe-yellow);
   }
 
-  /* --- ③works ------------------------------------------------------- */
+  /* --- ③apps -------------------------------------------------------- */
 
   /*
-   * 媒体を見出しにして、その下に実物を 2 件ずつ。
-   * 媒体どうしは罫線ではなく余白で分ける。4 つ並ぶので、
-   * 線を引くと表のように見えて「作品を見せる場」に読めなくなる。
+   * 各アプリの OGP 画像をそのまま並べる。
+   * 画像の中にタグラインも技術スタックも入っているので、下に足すのは
+   * 作品名と導線だけでいい。説明文を書くと画像と二重になる。
    */
-  .work {
-    margin-block: 1.75rem;
+  .app {
+    margin-block: 2rem;
   }
 
-  .work h3 {
-    margin: 0 0 0.5rem;
-    font-size: 0.9rem;
+  .shot {
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    /* 淡い背景の画像（daifuku）が地の白に溶けないよう縁を引く */
+    border: 1px solid var(--border);
   }
 
-  /*
-   * 媒体名は青くしない。ここで青を使うと、見出しと中身の作品名が
-   * 同じ強さになって、どちらを見ればいいのか分からなくなる。
-   * 見出しは構造、青くなっている作品名が本体、という並びにする。
-   * （global.css でナビゲーションのリンクを黒のままにしているのと同じ考え方）
-   */
-  .work h3 a {
-    color: inherit;
+  .shot img {
+    display: block;
+    width: 100%;
+    height: auto;
+    /*
+     * 1200×630 をそのまま出すと 1 枚 336px、3 枚で 1000px を超えて
+     * 1 ページものとしては重い。3 枚とも上下に 1 割ほど余白があるので、
+     * そこだけ削って中身（ロゴも UI モックも）は残す。
+     */
+    aspect-ratio: 1200 / 500;
+    object-fit: cover;
   }
 
-  .work h3 a:hover {
-    color: var(--accent);
+  .shot:hover {
+    border-color: var(--accent);
   }
+
+  .app-foot {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-top: 0.6rem;
+  }
+
+  .app-foot h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+
+  /* 導線は作品名より一段弱く。押す先が 2 つあっても迷わない程度に小さく */
+  .app-links {
+    margin: 0;
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    flex: none;
+  }
+
+  .app-links a::after {
+    /* 別の場所へ出ることを示す。外部リンクであることの合図 */
+    content: ' ↗';
+  }
+
+  /* --- ④blog -------------------------------------------------------- */
 
   .entries li {
-    margin-block: 0.5rem;
+    margin-block: 0.75rem;
     padding-inline-start: 0.9rem;
     font-size: 0.9rem;
-    /* 見出しの媒体と、その中身であることが分かる程度の段差 */
     border-inline-start: 1px solid var(--border);
   }
 
-  /* 日付が入るのはブログだけ。これが「新着」と「選んだもの」の目印になる */
   .entries time {
     display: block;
     color: var(--muted);
     font-size: 0.75rem;
   }
 
-  /*
-   * 稼働しているものへの導線。作品名より一段弱くする。
-   * ここが主役になると、何を見てほしいのかがぼやける。
-   */
-  .demo {
-    display: inline-block;
-    margin-top: 0.15rem;
-    font-size: 0.75rem;
+  .more {
+    margin-block: 1.25rem 0;
+    font-size: 0.8rem;
   }
 
-  .demo::after {
-    /* 別の場所へ出ることを示す。外部リンクであることの合図 */
-    content: ' ↗';
+  /* --- ⑤other ------------------------------------------------------- */
+
+  /*
+   * ここは「やっている」ことが伝わればよい。
+   * アプリと同じ密度で見せると、何を見てほしいのかがぼやける。
+   */
+  .other li {
+    display: flex;
+    gap: 0.9rem;
+    align-items: baseline;
+    margin-block: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .other .note {
+    display: inline;
+    font-size: 0.8rem;
   }
 
   /* --- ④history ----------------------------------------------------- */
