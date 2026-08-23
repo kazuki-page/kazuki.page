@@ -14,7 +14,7 @@ export const intro = {
    * 一行紹介。
    */
   tagline: 'まだ何者でもない、ような気がしつつもいろいろと。',
-  taglineSub: 'ブログ、イラスト、動画など。AIでアプリ開発の一方でプログラミング学習も。',
+  taglineSub: 'AIでアプリ開発の一方でプログラミング学習。その他、ブログ、イラスト、動画なども。',
 
   /*
    * アイコン画像。
@@ -28,7 +28,7 @@ export const intro = {
  */
 export const now: { text: string; note?: string }[] = [
   { text: 'ブログを書き続けている', note: '4年目、約300記事' },
-  { text: 'ブログとプロフページを工事中', note: 'WordPressからAstroへ' },
+  { text: 'AIでのアプリ開発', note: '「家主の帳面」「daifuku」「leaves」など' },
   { text: '自動車免許を取るために準備中' },
   { text: '免許取得後は就活を本格化予定' },
 ];
