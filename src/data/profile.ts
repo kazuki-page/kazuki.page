@@ -74,7 +74,7 @@ export const apps: App[] = [
     image: '/works/daifuku.png',
     alt: 'daifuku — 入出金と資産残高を切り離して記録する家計簿',
     demo: 'https://daifuku-demo.kazuki.page/',
-    // repo: 'https://github.com/kazuki-page/daifuku',  // public 化したら開ける
+    repo: 'https://github.com/kazuki-page/daifuku'
   },
   {
     name: 'leaves',
