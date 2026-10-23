@@ -29,8 +29,6 @@ export const intro = {
 export const now: { text: string; note?: string }[] = [
   { text: 'ブログを書き続けている', note: '4年目、約300記事' },
   { text: 'AIでのアプリ開発', note: '「家主の帳面」「daifuku」「leaves」など' },
-  { text: '自動車免許を取るために準備中' },
-  { text: '免許取得後は就活を本格化予定' },
 ];
 
 /*
